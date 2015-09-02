@@ -329,3 +329,8 @@ def seaf_delete(conf_dir, server_url, username, passwd, repo_id):
         print 'Delete repo test success.'
     else:
         print 'Delete repo test failed: %s.' % resp.reason
+
+def seaf_get_repo(conf_dir, repo_id):
+    pool = ccnet.ClientPool(conf_dir)
+    seafile_rpc = seafile.RpcClient(pool, req_pool=False)
+    return seafile_rpc.seafile_get_repo(repo_id)

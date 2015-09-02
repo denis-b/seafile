@@ -91,6 +91,21 @@ class TestUtil():
         except Exception:
             pass
 
+    def wait_sync(self):
+        max_retry = 12
+        cur_retry = 0
+        while cur_retry < max_retry:
+            time.sleep(5)
+            cur_retry += 1
+            repo1 = seaf_op.seaf_get_repo(self.cli1_dir, self.repo_id)
+            if repo1 is None:
+                continue
+            repo2 = seaf_op.seaf_get_repo(self.cli2_dir, self.repo_id)
+            if repo2 is None:
+                continue
+            if repo1.head_cmmt_id == repo2.head_cmmt_id:
+                break
+
     @staticmethod
     def verify_by_rsync(dir1, dir2):
         ret = call_process(['rsync', '-acrin', dir1, dir2])
@@ -104,8 +119,8 @@ class TestUtil():
                 if dattr != '.d..t......':
                     assert False, 'Sync with two client have different result: %s' % dattr
 
-    def verify_result(self, callable=None, duration=60):
-        time.sleep(duration)
+    def verify_result(self, callable=None):
+        self.wait_sync()
         if callable:
             callable(self.worktree1, self.worktree2)
         else:
