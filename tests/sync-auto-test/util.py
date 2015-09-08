@@ -123,7 +123,9 @@ class TestUtil():
                     continue
                 # omit directory has almost same result except st_mod
                 dattr = d.split(' ')[0]
-                if dattr != '.d..t......':
+                # rsync 3.1.1 : '.d..t.......'
+                # rsync 3.0.9 : '.d..t......'
+                if not all([c in ('d', 't', '.') for c in dattr]):
                     assert False, 'Sync with two client have different result: %s' % dattr
 
     def verify_result(self, callable=None):
