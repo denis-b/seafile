@@ -83,7 +83,8 @@ import seafile
 def _check_seafile():
     ''' Check ccnet and seafile have been installed '''
 
-    dirs = os.environ['PATH'].split(':')
+    sep = ':' if os.name != 'nt' else ';'
+    dirs = os.environ['PATH'].split(sep)
     def exist_in_path(prog):
         ''' Check whether 'prog' exists in system path '''
         for d in dirs:
@@ -96,11 +97,13 @@ def _check_seafile():
     progs = [ 'ccnet', 'ccnet-init', 'seaf-daemon' ]
 
     for prog in progs:
+        if os.name == 'nt':
+            prog += '.exe'
         if not exist_in_path(prog):
             print "%s not found in PATH. Have you installed seafile?" % prog
             sys.exit(1)
 
-def run_argv(argv, cwd=None, env=None, suppress_stdout=False, suppress_stderr=False):
+def run_argv(argv, cwd=None, env=None, suppress_stdout=False, suppress_stderr=False, wait=True):
     '''Run a program and wait it to finish, and return its exit code. The
     standard output of this program is supressed.
 
@@ -121,7 +124,9 @@ def run_argv(argv, cwd=None, env=None, suppress_stdout=False, suppress_stderr=Fa
                                 stdout=stdout,
                                 stderr=stderr,
                                 env=env)
-        return proc.wait()
+        if wait:
+            return proc.wait()
+        return 0
 
 def get_env():
     env = dict(os.environ)
@@ -187,7 +192,8 @@ def seaf_start_ccnet(conf_dir):
     ''' start ccnet daemon '''
 
     cmd = [ "ccnet", "--daemon", "-c", conf_dir ]
-    if run_argv(cmd, env=get_env(), suppress_stdout=True) != 0:
+    wait = False if os.name == 'nt' else True
+    if run_argv(cmd, env=get_env(), suppress_stdout=True, wait=wait) != 0:
         print 'Failed to start ccnet daemon.'
         sys.exit(1)
 
@@ -197,7 +203,8 @@ def seaf_start_seafile(conf_dir):
     cmd = [ "seaf-daemon", "--daemon", "-c", conf_dir,
             "-d", os.path.join(conf_dir, 'seafile-data'),
             "-w", os.path.join(conf_dir, 'seafile') ]
-    if run_argv(cmd, env=get_env(), suppress_stdout=True) != 0:
+    wait = False if os.name == 'nt' else True
+    if run_argv(cmd, env=get_env(), suppress_stdout=True, wait=wait) != 0:
         print 'Failed to start seafile daemon'
         sys.exit(1)
 
@@ -282,7 +289,7 @@ def seaf_desync(conf_dir, repo_path):
     repos = seafile_rpc.get_repo_list(-1, -1)
     repo = None
     for r in repos:
-        if r.worktree == repo_path.decode('utf-8'):
+        if r.worktree.replace('/', '\\') == repo_path.decode('utf-8').replace('/', '\\'):
             repo = r
             break
 

@@ -43,6 +43,13 @@ class TestUtil():
         seaf_op.seaf_init(self.cli1_dir)
         seaf_op.seaf_init(self.cli2_dir)
 
+        if os.name == 'nt':
+            conf2 = os.path.join(self.cli2_dir, 'ccnet.conf')
+            with open(conf2, 'r') as fp:
+                contents = fp.read()
+            with open(conf2, 'w') as fp:
+                fp.write(contents.replace('PORT = 13419', 'PORT = 13420'))
+
     def start_daemon(self):
         seaf_op.seaf_start_all(self.cli1_dir)
         seaf_op.seaf_start_all(self.cli2_dir)
